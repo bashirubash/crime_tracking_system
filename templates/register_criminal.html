@@ -3,17 +3,60 @@
 <div class="container mt-4">
   <div class="card shadow p-4">
     <h3 class="mb-4">Register Criminal</h3>
-    <form method="POST">
+    <form method="POST" id="criminalForm">
       <div class="row mb-3">
-        <div class="col"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
-        <div class="col"><label class="form-label">Age</label><input type="number" name="age" class="form-control" required></div>
+        <div class="col">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-control" required>
+        </div>
+        <div class="col">
+          <label class="form-label">Age</label>
+          <input type="number" name="age" class="form-control" required>
+        </div>
       </div>
-      <div class="mb-3"><label class="form-label">Gender</label>
-        <select name="gender" class="form-select"><option>Male</option><option>Female</option></select></div>
-      <div class="mb-3"><label class="form-label">Fingerprint</label><br>
-        <button type="button" class="btn btn-outline-primary" onclick="alert('Integrate DigitalPersona SDK here!')">Capture Fingerprint</button></div>
+
+      <div class="mb-3">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-select">
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Fingerprint</label><br>
+        <button type="button" class="btn btn-outline-primary" onclick="captureFingerprint()">Capture Fingerprint</button>
+        <input type="hidden" name="fingerprint" id="fingerprintInput">
+        <small id="fp-status" class="text-muted d-block mt-2">No fingerprint captured yet</small>
+      </div>
+
       <button class="btn btn-success w-100">Register</button>
     </form>
   </div>
 </div>
+
+<script src="https://digitalpersona.github.io/dp-web-sdk/dp-web-sdk.min.js"></script>
+<script>
+  function captureFingerprint() {
+    // Initialize DigitalPersona Web SDK
+    const reader = new Fingerprint.WebApi();
+
+    reader.startAcquisition(Fingerprint.SampleFormat.PngImage)
+      .then(() => {
+        console.log("Acquisition started");
+      })
+      .catch(err => {
+        alert("Fingerprint reader not available: " + err.message);
+      });
+
+    reader.onSamplesAcquired = function(s) {
+      let samples = JSON.parse(s.samples);
+      if (samples.length > 0) {
+        // Save the base64 fingerprint
+        document.getElementById("fingerprintInput").value = samples[0];
+        document.getElementById("fp-status").innerText = "✅ Fingerprint captured!";
+      }
+    };
+  }
+</script>
 {% endblock %}
