@@ -28,8 +28,8 @@ with app.app_context():
     # Criminals
     if Criminal.query.count() == 0:
         criminals = [
-            Criminal(name="James Doe", age=30, gender="Male"),
-            Criminal(name="Mary Jane", age=25, gender="Female")
+            Criminal(name="James Doe", age=30, gender="Male", fingerprint=None),
+            Criminal(name="Mary Jane", age=25, gender="Female", fingerprint=None)
         ]
         db.session.add_all(criminals)
 
@@ -80,10 +80,12 @@ def register_criminal():
         name = request.form['name']
         age = request.form['age']
         gender = request.form['gender']
-        criminal = Criminal(name=name, age=age, gender=gender)
+        fingerprint = request.form.get('fingerprint')  # Base64 fingerprint from DigitalPersona SDK
+
+        criminal = Criminal(name=name, age=age, gender=gender, fingerprint=fingerprint)
         db.session.add(criminal)
         db.session.commit()
-        flash("Criminal registered successfully!", "success")
+        flash("Criminal registered successfully with fingerprint!", "success")
         return redirect(url_for('index'))
     return render_template("register_criminal.html")
 
