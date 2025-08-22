@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow p-4 mb-4">
+    <h3 class="mb-3">Add Case</h3>
+    <form method="POST">
+      <div class="mb-3"><label class="form-label">Case No</label><input type="text" name="case_no" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" required></textarea></div>
+      <div class="mb-3"><label class="form-label">Criminal</label>
+        <select name="criminal_id" class="form-select">
+          {% for c in criminals %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+        </select></div>
+      <button class="btn btn-primary">Add Case</button>
+    </form>
+  </div>
+  <div class="card shadow p-4">
+    <h3>All Cases</h3>
+    <table class="table table-striped"><thead><tr><th>Case No</th><th>Description</th><th>Status</th></tr></thead>
+      <tbody>{% for c in cases %}<tr><td>{{ c.case_no }}</td><td>{{ c.description }}</td><td>{{ c.status }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">📊 System Dashboard</h2>
+<div class="row g-4">
+  <div class="col-md-3"><div class="card text-center shadow"><div class="card-body"><h4>{{ criminals }}</h4><p>Criminals</p></div></div></div>
+  <div class="col-md-3"><div class="card text-center shadow"><div class="card-body"><h4>{{ cases }}</h4><p>Cases</p></div></div></div>
+  <div class="col-md-3"><div class="card text-center shadow"><div class="card-body"><h4>{{ solved }}</h4><p>Solved Cases</p></div></div></div>
+  <div class="col-md-3"><div class="card text-center shadow"><div class="card-body"><h4>{{ pending }}</h4><p>Pending Cases</p></div></div></div>
+</div>
+{% endblock %}

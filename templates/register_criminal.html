@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow p-4">
+    <h3 class="mb-4">Register Criminal</h3>
+    <form method="POST">
+      <div class="row mb-3">
+        <div class="col"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
+        <div class="col"><label class="form-label">Age</label><input type="number" name="age" class="form-control" required></div>
+      </div>
+      <div class="mb-3"><label class="form-label">Gender</label>
+        <select name="gender" class="form-select"><option>Male</option><option>Female</option></select></div>
+      <div class="mb-3"><label class="form-label">Fingerprint</label><br>
+        <button type="button" class="btn btn-outline-primary" onclick="alert('Integrate DigitalPersona SDK here!')">Capture Fingerprint</button></div>
+      <button class="btn btn-success w-100">Register</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
