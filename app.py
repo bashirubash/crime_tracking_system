@@ -13,13 +13,35 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-# Initialize DB with default officer
+# Initialize DB with default data
 with app.app_context():
     db.create_all()
+
+    # Officers
     if Officer.query.count() == 0:
-        admin = Officer(name="Admin", username="admin", password_hash=generate_password_hash("admin123"))
-        db.session.add(admin)
-        db.session.commit()
+        officers = [
+            Officer(name="Admin", username="admin", password_hash=generate_password_hash("admin123")),
+            Officer(name="Inspector John", username="john", password_hash=generate_password_hash("john123"))
+        ]
+        db.session.add_all(officers)
+
+    # Criminals
+    if Criminal.query.count() == 0:
+        criminals = [
+            Criminal(name="James Doe", age=30, gender="Male"),
+            Criminal(name="Mary Jane", age=25, gender="Female")
+        ]
+        db.session.add_all(criminals)
+
+    # Cases
+    if Case.query.count() == 0:
+        cases = [
+            Case(case_no="C-001", description="Armed robbery case", status="Pending", criminal_id=1, officer_id=1),
+            Case(case_no="C-002", description="Fraud investigation", status="Solved", criminal_id=2, officer_id=2)
+        ]
+        db.session.add_all(cases)
+
+    db.session.commit()
 
 # ----------------- ROUTES -----------------
 
@@ -88,5 +110,7 @@ def match():
         return redirect(url_for('login'))
     return render_template("match.html")
 
+# ----------------- MAIN ENTRY -----------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
