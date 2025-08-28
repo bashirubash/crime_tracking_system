@@ -17,44 +17,70 @@
   let reader;
 
   async function scanFingerprint() {
+    document.getElementById("fp-status").innerText = "🔄 Trying hardware scanner...";
+
+    try {
+      // -------- Try backend /scan first --------
+      const res = await fetch("/scan");
+      const data = await res.json();
+
+      if (data.status === "success" && data.fingerprint) {
+        document.getElementById("fp-status").innerText = "✅ Fingerprint captured from hardware! Checking database...";
+
+        // send to backend for matching
+        matchFingerprint(data.fingerprint);
+        return;
+      } else {
+        document.getElementById("fp-status").innerText = "⚠️ Hardware scan failed (" + data.message + "). Falling back to Web SDK...";
+        fallbackWebSDK();
+      }
+    } catch (err) {
+      document.getElementById("fp-status").innerText = "⚠️ Error using hardware scanner: " + err + ". Falling back to Web SDK...";
+      fallbackWebSDK();
+    }
+  }
+
+  // --------- Web SDK fallback ----------
+  async function fallbackWebSDK() {
     try {
       reader = new FingerprintReader();
       await reader.startAcquisition(Fingerprint.SampleFormat.PngImage);
 
-      document.getElementById("fp-status").innerText = "Place your finger on the scanner...";
+      document.getElementById("fp-status").innerText = "Place your finger on the scanner (Web SDK)...";
 
       reader.onSamplesAcquired = async function (event) {
         const samples = JSON.parse(event.samples);
         if (samples.length > 0) {
-          const fingerprintData = samples[0]; // Base64 fingerprint image/string
-          document.getElementById("fp-status").innerText = "✅ Fingerprint captured! Checking database...";
+          const fingerprintData = samples[0]; 
+          document.getElementById("fp-status").innerText = "✅ Fingerprint captured (Web SDK)! Checking database...";
 
           await reader.stopAcquisition();
-
-          // Send to backend for matching
-          fetch("/match_fingerprint", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ fingerprint: fingerprintData })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.match) {
-              document.getElementById("fp-status").innerText = "✅ Match found: " + data.name;
-            } else {
-              document.getElementById("fp-status").innerText = "❌ No match found.";
-            }
-          })
-          .catch(err => {
-            document.getElementById("fp-status").innerText = "⚠️ Error sending fingerprint: " + err;
-          });
+          matchFingerprint(fingerprintData);
         }
       };
     } catch (err) {
-      document.getElementById("fp-status").innerText = "⚠️ Fingerprint reader error: " + err.message;
+      document.getElementById("fp-status").innerText = "⚠️ Web SDK error: " + err.message;
     }
+  }
+
+  // --------- Send to backend for DB match ----------
+  function matchFingerprint(fingerprintData) {
+    fetch("/match_fingerprint", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fingerprint: fingerprintData })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.match) {
+        document.getElementById("fp-status").innerText = "✅ Match found: " + data.name;
+      } else {
+        document.getElementById("fp-status").innerText = "❌ No match found.";
+      }
+    })
+    .catch(err => {
+      document.getElementById("fp-status").innerText = "⚠️ Error sending fingerprint: " + err;
+    });
   }
 </script>
 {% endblock %}
