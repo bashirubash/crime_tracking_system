@@ -14,29 +14,28 @@
 <!-- DigitalPersona Web SDK -->
 <script src="https://cdn.digitalpersona.com/dp-web-sdk/2.0.0/dp-web-sdk.min.js"></script>
 <script>
+  let reader;
+
   async function scanFingerprint() {
     try {
-      // Initialize inside the function
-      const reader = new FingerprintReader();
-
+      reader = new FingerprintReader();
       await reader.startAcquisition(Fingerprint.SampleFormat.PngImage);
+
       document.getElementById("fp-status").innerText = "Place your finger on the scanner...";
 
       reader.onSamplesAcquired = async function (event) {
         const samples = JSON.parse(event.samples);
         if (samples.length > 0) {
-          const fingerprintData = samples[0]; // Base64 image/string
+          const fingerprintData = samples[0]; // Base64 fingerprint image/string
           document.getElementById("fp-status").innerText = "✅ Fingerprint captured! Checking database...";
 
-          // Stop further scans
           await reader.stopAcquisition();
 
           // Send to backend for matching
           fetch("/match_fingerprint", {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": "{{ csrf_token() }}"   // keep only if using Django/Flask-WTF
+              "Content-Type": "application/json"
             },
             body: JSON.stringify({ fingerprint: fingerprintData })
           })
