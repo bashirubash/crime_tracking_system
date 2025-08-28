@@ -14,6 +14,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+# ----------------- TRY TO INIT FINGERPRINT READER -----------------
+try:
+    import uareu   # ⚠️ Example SDK import (depends on your scanner SDK)
+    reader = uareu.Reader()
+    reader.Open()
+    print("✅ Fingerprint reader initialized")
+except Exception as e:
+    reader = None
+    print("⚠️ Reader not initialized:", e)
+# ------------------------------------------------------------------
+
 # Initialize DB with default data
 with app.app_context():
     db.create_all()
@@ -81,7 +92,7 @@ def register_criminal():
         name = request.form['name']
         age = request.form['age']
         gender = request.form['gender']
-        fingerprint = request.form.get('fingerprint')  # Base64 fingerprint from DigitalPersona SDK
+        fingerprint = request.form.get('fingerprint')  # Base64 fingerprint from SDK/browser
 
         criminal = Criminal(name=name, age=age, gender=gender, fingerprint=fingerprint)
         db.session.add(criminal)
@@ -113,7 +124,26 @@ def match():
         return redirect(url_for('login'))
     return render_template("match.html")
 
-# ---------- NEW ROUTE: API for fingerprint matching ----------
+# ---------- NEW ROUTE: Direct hardware scan ----------
+@app.route('/scan', methods=['GET'])
+def scan():
+    if not session.get("officer_id"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if reader is None:
+        return jsonify({"status": "error", "message": "Fingerprint reader not initialized"})
+
+    try:
+        sample = reader.Capture()   # ⚠️ method depends on actual SDK
+        if sample:
+            encoded = base64.b64encode(sample).decode('utf-8')
+            return jsonify({"status": "success", "fingerprint": encoded})
+        else:
+            return jsonify({"status": "error", "message": "No fingerprint captured"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+# ---------- API for fingerprint matching ----------
 @app.route('/match_fingerprint', methods=['POST'])
 def match_fingerprint():
     if not session.get("officer_id"):
@@ -126,7 +156,6 @@ def match_fingerprint():
         return jsonify({"match": False, "message": "No fingerprint provided"})
 
     # Very basic match (just compare Base64 strings stored in DB)
-    # In production you’d use a proper biometric SDK/library
     criminal = Criminal.query.filter_by(fingerprint=fingerprint).first()
 
     if criminal:
