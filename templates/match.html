@@ -14,10 +14,11 @@
 <!-- DigitalPersona Web SDK -->
 <script src="https://cdn.digitalpersona.com/dp-web-sdk/2.0.0/dp-web-sdk.min.js"></script>
 <script>
-  const reader = new FingerprintReader();
-
   async function scanFingerprint() {
     try {
+      // Initialize inside the function
+      const reader = new FingerprintReader();
+
       await reader.startAcquisition(Fingerprint.SampleFormat.PngImage);
       document.getElementById("fp-status").innerText = "Place your finger on the scanner...";
 
@@ -35,7 +36,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-CSRFToken": "{{ csrf_token() }}"   // if Django/Flask-WTF is used
+              "X-CSRFToken": "{{ csrf_token() }}"   // keep only if using Django/Flask-WTF
             },
             body: JSON.stringify({ fingerprint: fingerprintData })
           })
