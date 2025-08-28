@@ -35,28 +35,30 @@
   </div>
 </div>
 
-<script src="https://digitalpersona.github.io/dp-web-sdk/dp-web-sdk.min.js"></script>
+<!-- Use the official DigitalPersona Web SDK -->
+<script src="https://cdn.digitalpersona.com/dp-web-sdk/2.0.0/dp-web-sdk.min.js"></script>
 <script>
-  function captureFingerprint() {
-    // Initialize DigitalPersona Web SDK
-    const reader = new Fingerprint.WebApi();
+  const reader = new FingerprintReader();
 
-    reader.startAcquisition(Fingerprint.SampleFormat.PngImage)
-      .then(() => {
-        console.log("Acquisition started");
-      })
-      .catch(err => {
-        alert("Fingerprint reader not available: " + err.message);
-      });
+  async function captureFingerprint() {
+    try {
+      await reader.startAcquisition(Fingerprint.SampleFormat.PngImage);
+      console.log("Acquisition started");
+      document.getElementById("fp-status").innerText = "Place your finger on the scanner...";
 
-    reader.onSamplesAcquired = function(s) {
-      let samples = JSON.parse(s.samples);
-      if (samples.length > 0) {
-        // Save the base64 fingerprint
-        document.getElementById("fingerprintInput").value = samples[0];
-        document.getElementById("fp-status").innerText = "✅ Fingerprint captured!";
-      }
-    };
+      reader.onSamplesAcquired = function (event) {
+        const samples = JSON.parse(event.samples);
+        if (samples.length > 0) {
+          // Save the Base64 fingerprint
+          document.getElementById("fingerprintInput").value = samples[0];
+          document.getElementById("fp-status").innerText = "✅ Fingerprint captured!";
+          // Stop acquisition after capturing
+          reader.stopAcquisition();
+        }
+      };
+    } catch (err) {
+      alert("Fingerprint reader not available: " + err.message);
+    }
   }
 </script>
 {% endblock %}
