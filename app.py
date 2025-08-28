@@ -1,8 +1,9 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, Officer, Criminal, Case
 from datetime import datetime
+import base64
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -111,6 +112,27 @@ def match():
     if not session.get("officer_id"):
         return redirect(url_for('login'))
     return render_template("match.html")
+
+# ---------- NEW ROUTE: API for fingerprint matching ----------
+@app.route('/match_fingerprint', methods=['POST'])
+def match_fingerprint():
+    if not session.get("officer_id"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    fingerprint = data.get("fingerprint")
+
+    if not fingerprint:
+        return jsonify({"match": False, "message": "No fingerprint provided"})
+
+    # Very basic match (just compare Base64 strings stored in DB)
+    # In production you’d use a proper biometric SDK/library
+    criminal = Criminal.query.filter_by(fingerprint=fingerprint).first()
+
+    if criminal:
+        return jsonify({"match": True, "name": criminal.name})
+    else:
+        return jsonify({"match": False, "message": "No match found"})
 
 # ----------------- MAIN ENTRY -----------------
 if __name__ == "__main__":
