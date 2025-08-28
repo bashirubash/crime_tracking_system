@@ -3,7 +3,7 @@
 <div class="container mt-4">
   <div class="card shadow p-4">
     <h3 class="mb-4">Register Criminal</h3>
-    <form method="POST" id="criminalForm">
+    <form method="POST" id="criminalForm" onsubmit="return validateForm()">
       <div class="row mb-3">
         <div class="col">
           <label class="form-label">Full Name</label>
@@ -17,7 +17,8 @@
 
       <div class="mb-3">
         <label class="form-label">Gender</label>
-        <select name="gender" class="form-select">
+        <select name="gender" class="form-select" required>
+          <option value="">-- Select --</option>
           <option>Male</option>
           <option>Female</option>
         </select>
@@ -35,30 +36,52 @@
   </div>
 </div>
 
-<!-- Use the official DigitalPersona Web SDK -->
+<!-- DigitalPersona Web SDK -->
 <script src="https://cdn.digitalpersona.com/dp-web-sdk/2.0.0/dp-web-sdk.min.js"></script>
 <script>
-  const reader = new FingerprintReader();
+  let reader;
+
+  window.onload = function() {
+    try {
+      reader = new FingerprintReader();
+    } catch (err) {
+      document.getElementById("fp-status").innerText = "⚠️ Fingerprint reader not available.";
+    }
+  };
 
   async function captureFingerprint() {
+    if (!reader) {
+      document.getElementById("fp-status").innerText = "⚠️ Reader not initialized.";
+      return;
+    }
+
     try {
+      // Always stop any ongoing acquisition before starting
+      await reader.stopAcquisition().catch(()=>{});
+
       await reader.startAcquisition(Fingerprint.SampleFormat.PngImage);
-      console.log("Acquisition started");
       document.getElementById("fp-status").innerText = "Place your finger on the scanner...";
 
       reader.onSamplesAcquired = function (event) {
         const samples = JSON.parse(event.samples);
         if (samples.length > 0) {
-          // Save the Base64 fingerprint
           document.getElementById("fingerprintInput").value = samples[0];
           document.getElementById("fp-status").innerText = "✅ Fingerprint captured!";
-          // Stop acquisition after capturing
           reader.stopAcquisition();
         }
       };
     } catch (err) {
-      alert("Fingerprint reader not available: " + err.message);
+      document.getElementById("fp-status").innerText = "⚠️ Error: " + err.message;
     }
+  }
+
+  function validateForm() {
+    const fp = document.getElementById("fingerprintInput").value;
+    if (!fp) {
+      alert("Please capture fingerprint before submitting.");
+      return false;
+    }
+    return true;
   }
 </script>
 {% endblock %}
