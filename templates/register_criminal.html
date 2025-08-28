@@ -41,40 +41,51 @@
 <script>
   let reader;
 
-  window.onload = function() {
+  // Main capture handler
+  async function captureFingerprint() {
+    document.getElementById("fp-status").innerText = "🔄 Trying hardware scanner...";
+
+    try {
+      // -------- Try backend /scan first --------
+      const res = await fetch("/scan");
+      const data = await res.json();
+
+      if (data.status === "success" && data.fingerprint) {
+        document.getElementById("fingerprintInput").value = data.fingerprint;
+        document.getElementById("fp-status").innerText = "✅ Fingerprint captured from hardware!";
+        return;
+      } else {
+        document.getElementById("fp-status").innerText = "⚠️ Hardware scan failed (" + data.message + "). Falling back to Web SDK...";
+        fallbackWebSDK();
+      }
+    } catch (err) {
+      document.getElementById("fp-status").innerText = "⚠️ Error using hardware scanner: " + err + ". Falling back to Web SDK...";
+      fallbackWebSDK();
+    }
+  }
+
+  // --------- Web SDK fallback ----------
+  async function fallbackWebSDK() {
     try {
       reader = new FingerprintReader();
-    } catch (err) {
-      document.getElementById("fp-status").innerText = "⚠️ Fingerprint reader not available.";
-    }
-  };
-
-  async function captureFingerprint() {
-    if (!reader) {
-      document.getElementById("fp-status").innerText = "⚠️ Reader not initialized.";
-      return;
-    }
-
-    try {
-      // Always stop any ongoing acquisition before starting
-      await reader.stopAcquisition().catch(()=>{});
-
       await reader.startAcquisition(Fingerprint.SampleFormat.PngImage);
-      document.getElementById("fp-status").innerText = "Place your finger on the scanner...";
+
+      document.getElementById("fp-status").innerText = "Place your finger on the scanner (Web SDK)...";
 
       reader.onSamplesAcquired = function (event) {
         const samples = JSON.parse(event.samples);
         if (samples.length > 0) {
           document.getElementById("fingerprintInput").value = samples[0];
-          document.getElementById("fp-status").innerText = "✅ Fingerprint captured!";
+          document.getElementById("fp-status").innerText = "✅ Fingerprint captured (Web SDK)!";
           reader.stopAcquisition();
         }
       };
     } catch (err) {
-      document.getElementById("fp-status").innerText = "⚠️ Error: " + err.message;
+      document.getElementById("fp-status").innerText = "⚠️ Web SDK error: " + err.message;
     }
   }
 
+  // --------- Validate before submit ----------
   function validateForm() {
     const fp = document.getElementById("fingerprintInput").value;
     if (!fp) {
